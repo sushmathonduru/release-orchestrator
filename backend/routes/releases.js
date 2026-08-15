@@ -85,3 +85,4 @@ router.delete('/:id', async (req, res) => {
 
 module.exports = router;
 // feature: release promotion endpoint added
+// feature: added stage promotion validation logic
