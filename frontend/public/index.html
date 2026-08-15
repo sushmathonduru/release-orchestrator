@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Release Orchestration Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+  :root { --dev:#3b82f6; --qa:#f59e0b; --staging:#8b5cf6; --prod:#10b981; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; background:#f3f4f6; margin:0; padding:0; }
+  header { background:#111827; color:#fff; padding:20px 30px; }
+  header h1 { margin:0; font-size:22px; }
+  header p { margin:4px 0 0; color:#9ca3af; font-size:13px; }
+  main { max-width:1100px; margin:30px auto; padding:0 20px; }
+  .form-card { background:#fff; padding:20px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-bottom:30px; }
+  .form-card h2 { margin-top:0; font-size:16px; }
+  .form-card input, .form-card textarea { width:100%; padding:8px; margin:6px 0 14px; border:1px solid #d1d5db; border-radius:4px; }
+  .form-card button { background:#2563eb; color:#fff; border:none; padding:10px 18px; border-radius:4px; cursor:pointer; }
+  table { width:100%; border-collapse:collapse; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+  th, td { padding:10px 12px; text-align:left; border-bottom:1px solid #e5e7eb; font-size:14px; }
+  th { background:#f9fafb; }
+  .badge { padding:3px 10px; border-radius:12px; color:#fff; font-size:12px; }
+  .badge.Dev { background:var(--dev); }
+  .badge.QA { background:var(--qa); }
+  .badge.Staging { background:var(--staging); }
+  .badge.Production { background:var(--prod); }
+  .actions button { margin-right:6px; font-size:12px; padding:4px 8px; border-radius:4px; border:1px solid #d1d5db; background:#fff; cursor:pointer; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Enterprise Release Orchestration &amp; Deployment Automation Platform</h1>
+  <p>Dev &rarr; QA &rarr; Staging &rarr; Production pipeline tracker</p>
+</header>
+
+<main>
+  <div class="form-card">
+    <h2>Register a new release</h2>
+    <input id="appName" placeholder="Application name (e.g. payments-service)" />
+    <input id="version" placeholder="Version (e.g. v1.2.0)" />
+    <textarea id="notes" rows="2" placeholder="Release notes"></textarea>
+    <button onclick="createRelease()">Create Release</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Application</th><th>Version</th><th>Stage</th><th>Status</th><th>Approved By</th><th>Actions</th></tr>
+    </thead>
+    <tbody id="releaseTable"></tbody>
+  </table>
+</main>
+
+<script>
+  const API_BASE = window.location.origin.includes('5173') || window.location.origin.includes('3000')
+    ? 'http://localhost:5000/api'
+    : '/api'; // when served through nginx, /api is proxied to the backend container
+
+  async function loadReleases() {
+    const res = await fetch(`${API_BASE}/releases`);
+    const releases = await res.json();
+    const tbody = document.getElementById('releaseTable');
+    tbody.innerHTML = '';
+    releases.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.applicationName}</td>
+        <td>${r.version}</td>
+        <td><span class="badge ${r.stage}">${r.stage}</span></td>
+        <td>${r.status}</td>
+        <td>${r.approvedBy || '-'}</td>
+        <td class="actions">
+          <button onclick="approve('${r._id}')">Approve</button>
+          <button onclick="promote('${r._id}')">Promote</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function createRelease() {
+    const applicationName = document.getElementById('appName').value;
+    const version = document.getElementById('version').value;
+    const notes = document.getElementById('notes').value;
+    if (!applicationName || !version) return alert('Application name and version are required');
+    await fetch(`${API_BASE}/releases`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ applicationName, version, notes }),
+    });
+    document.getElementById('appName').value = '';
+    document.getElementById('version').value = '';
+    document.getElementById('notes').value = '';
+    loadReleases();
+  }
+
+  async function approve(id) {
+    const approvedBy = prompt('Approver name:', 'release-manager');
+    if (approvedBy === null) return;
+    await fetch(`${API_BASE}/releases/${id}/approve`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ approvedBy }),
+    });
+    loadReleases();
+  }
+
+  async function promote(id) {
+    await fetch(`${API_BASE}/releases/${id}/promote`, { method: 'PATCH' });
+    loadReleases();
+  }
+
+  loadReleases();
+  setInterval(loadReleases, 5000);
+</script>
+</body>
+</html>
