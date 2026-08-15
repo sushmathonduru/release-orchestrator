@@ -17,7 +17,7 @@ async function connectDB() {
     // Retry after 5 seconds instead of crashing immediately.
     // This matters in Docker Compose because the backend container
     // can start slightly before the database container is ready.
-    setTimeout(connectDB, 5000 // hotfix: retry delay tuned);
+    setTimeout(connectDB, 3000); // hotfix: retry delay tuned);
   }
 }
 
