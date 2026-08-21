@@ -13,29 +13,29 @@ pipeline {
         stage('Verify Project') {
             steps {
                 echo 'Verifying project files...'
-                bat 'dir'
-                bat 'docker compose config'
+                sh 'ls -la'
+                sh 'docker compose config'
             }
         }
 
         stage('Build Docker Images') {
             steps {
                 echo 'Building Docker images...'
-                bat 'docker compose build'
+                sh 'docker compose build'
             }
         }
 
         stage('Deploy Application') {
             steps {
                 echo 'Starting Release Orchestrator application...'
-                bat 'docker compose up -d'
+                sh 'docker compose up -d'
             }
         }
 
         stage('Verify Deployment') {
             steps {
                 echo 'Checking running containers...'
-                bat 'docker compose ps'
+                sh 'docker compose ps'
             }
         }
     }
