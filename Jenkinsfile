@@ -3,18 +3,13 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
-            steps {
-                echo 'Checking out source code from GitHub...'
-                checkout scm
-            }
-        }
-
         stage('Verify Project') {
             steps {
                 echo 'Verifying project files...'
+                sh 'pwd'
                 sh 'ls -la'
-                sh 'docker compose config'
+                sh 'docker --version'
+                sh 'docker compose version'
             }
         }
 
@@ -27,7 +22,7 @@ pipeline {
 
         stage('Deploy Application') {
             steps {
-                echo 'Starting Release Orchestrator application...'
+                echo 'Deploying Release Orchestrator...'
                 sh 'docker compose up -d'
             }
         }
@@ -35,14 +30,14 @@ pipeline {
         stage('Verify Deployment') {
             steps {
                 echo 'Checking running containers...'
-                sh 'docker compose ps'
+                sh 'docker ps'
             }
         }
     }
 
     post {
         success {
-            echo 'Release Orchestrator deployment completed successfully!'
+            echo 'Release Orchestrator deployment successful!'
         }
 
         failure {
