@@ -9,7 +9,7 @@ WORKDIR /usr/src/app
 
 # 3. Copy only the dependency manifests first.
 #    Docker caches this layer, so "npm install" only re-runs when
-#    package.json actually changes - this makes rebuilds much faster.
+#    package.json actually changes - this makes rebuilds much faster
 COPY package*.json ./
 
 # 4. Install production dependencies only
