@@ -38,7 +38,7 @@ services:
 
   # ---------------------------------------------------------------
   # Frontend - static dashboard served by nginx, proxies /api calls
-  # to the backend service
+  # to the backend services
   # ---------------------------------------------------------------
   frontend:
     build:
